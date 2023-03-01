@@ -1,0 +1,74 @@
+#include <cmath>
+
+double wavelength_saastamoinen(double angle_of_view, double temperature, double pressure, double humidity) {
+    // Constants used in the Saastamoinen formula
+    double A = 77.6;
+    double B = 1.452;
+    double C = 0.0040;
+    double D = 0.0032;
+    double E = 0.0006;
+    double F = 0.0003;
+    double G = 0.0001;
+
+    // Convert angle of view to radians
+    double rad_angle = angle_of_view * M_PI / 180;
+
+    // Calculate refraction using the Saastamoinen formula
+    double refraction = (A / (temperature + 273)) * (pressure / 1013) * (1 + (B - (C * temperature)) * (humidity / 100) + D * pow(100, 2) - E * pow(humidity / 100, 3) + F * pow(humidity / 100, 4) - G * pow(humidity / 100, 5));
+// Calculate wavelength using the refraction and angle of view
+double wavelength = (2 * refraction) / (sin(rad_angle + (refraction / 206265)) - sin(rad_angle));
+
+return wavelength;
+
+
+
+
+
+
+
+#include <algorithm>
+
+void wavelength_to_rgb(double wavelength, double& r, double& g, double& b) {
+    // Normalize wavelength to be within the visible spectrum (380 - 780 nm)
+    wavelength = std::max(380.0, std::min(780.0, wavelength));
+
+    // Convert wavelength to an RGB color
+    if (wavelength >= 380 && wavelength <= 440) {
+        r = -1 * (wavelength - 440) / (440 - 380);
+        g = 0;
+        b = 1;
+    } else if (wavelength >= 440 && wavelength <= 490) {
+        r = 0;
+        g = (wavelength - 440) / (490 - 440);
+        b = 1;
+    } else if (wavelength >= 490 && wavelength <= 510) {
+        r = 0;
+        g = 1;
+        b = -1 * (wavelength - 510) / (510 - 490);
+    } else if (wavelength >= 510 && wavelength <= 580) {
+        r = (wavelength - 510) / (580 - 510);
+        g = 1;
+        b = 0;
+    } else if (wavelength >= 580 && wavelength <= 645) {
+        r = 1;
+        g = -1 * (wavelength - 645) / (645 - 580);
+        b = 0;
+    } else if (wavelength >= 645 && wavelength <= 780) {
+        r = 1;
+        g = 0;
+        b = 0;
+    } else {
+        r = 0;
+        g = 0;
+        b = 0;
+    }
+
+    // Scale RGB values to be between 0 and 1
+    double maxValue = std::max(r, std::max(g, b));
+    if (maxValue > 1) {
+        r /= maxValue;
+        g /= maxValue;
+        b /= maxValue;
+    }
+}
+

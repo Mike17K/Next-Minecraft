@@ -1,0 +1,108 @@
+#version 330 core
+
+in vec2 vertex_UV;
+uniform sampler2D textureSampler;
+uniform mat4 MVP;
+
+in float visibility;
+in vec3 vertex_position_worldspace;
+in vec3 vertex_position_cameraspace;
+in vec3 vertex_normal_cameraspace;
+in vec4 vertex_position_lightspace; // shading
+
+flat in int material; 
+
+in vec3 normal;
+
+// output data
+
+// Values that stay constant for the whole mesh.
+uniform float time;
+
+
+// Phong 
+// light properties
+struct Light {
+    vec4 La;
+    vec4 Ld;
+    vec4 Ls;
+    vec3 lightPosition_worldspace;
+    vec3 lightDirection;
+    float power;
+};
+uniform Light light;
+
+// materials
+struct Material {
+    vec4 Ka; 
+    vec4 Kd;
+    vec4 Ks;
+    float Ns; 
+};
+uniform Material mtl;
+
+
+out vec4 fragmentColor;
+
+void phong(float visibility);
+
+void main()
+{
+    //vec4 main_texture = vec4(texture(textureSampler, vertex_UV).rgb, 1.0f);
+    //fragmentColor = vec4(main_texture.xyz,visibility);
+
+
+    //float shadow  = ShadowCalculation(vertex_position_lightspace);
+    //visibility = 1- shadow*0.7;
+    
+    phong(visibility);
+
+}
+
+
+
+void phong(float visibility) {
+    vec4 _Ks = vec4(0.0f,0.0f,0.0f,0.0f); //vec4(texture(textureSampler, vertex_UV).rgb, 1.0); //specularColorSampler
+    vec4 _Kd = vec4(0.0f,0.0f,0.0f,1.0f); //vec4(texture(textureSampler, vertex_UV).rgb, 1.0); //diffuseColorSampler
+    vec4 _Ka = vec4(texture(textureSampler, vertex_UV).rgb, 1.0f);
+    float _Ns = 10;
+    
+    
+    float transparency;
+    if(material==15){
+        transparency=0.6f;
+        _Ka = vec4(0.1f,0.1f,1.0f,1.0f);
+    }else{
+        transparency=1.0f;
+    }
+
+    // use texture for materials
+
+
+    
+    
+    // model ambient intensity (Ia)
+    vec4 Ia = light.La * _Ka;
+    
+    vec3 N = normalize(vertex_normal_cameraspace); 
+    vec3 L = normalize((MVP* vec4(light.lightPosition_worldspace, 1)).xyz - vertex_position_cameraspace);
+    float cosTheta = clamp(dot(L, N), 0, 1);
+    vec4 Id = light.Ld * _Kd * cosTheta; 
+    
+    // model specular intensity (Is)
+    vec3 R = reflect(-L, N);
+    vec3 E = normalize(- vertex_position_cameraspace);
+    float cosAlpha = clamp(dot(E, R), 0, 1);
+    float specular_factor = pow(cosAlpha, _Ns);
+    vec4 Is = light.Ls * _Ks * specular_factor;
+    
+        // final fragment color
+        fragmentColor = vec4(vec4(
+            vec4(visibility * Ia.xyz,1.0f) + 
+            visibility * Id +  
+            visibility * Is).xyz,transparency); 
+    
+
+}
+
+

@@ -1,0 +1,14 @@
+#version 330 core
+
+in vec3 FragPos;
+
+out float fragDepth;
+
+uniform mat4 lightVP;
+
+void main()
+{
+    vec4 viewPos = lightVP * vec4(FragPos, 1.0);
+    
+    fragDepth = 0.0*viewPos.z / viewPos.w;
+}

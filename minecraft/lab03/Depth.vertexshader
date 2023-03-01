@@ -1,0 +1,47 @@
+#version 330 core
+
+#define CHUNK_SIZE 16
+
+#define BLOCK_SIZE_X 1
+#define BLOCK_SIZE_Y 1
+#define BLOCK_SIZE_Z 1
+
+
+layout(location = 0) in int vertex_data_low;
+layout(location = 1) in int vertex_data_high;
+
+uniform mat4 lightVP;
+
+int getPoint(int data_low,int data_high, int choice) { // axis: 0=x 1=y 2=z 3=index_x 4=index_z
+    switch (choice) {
+    case 0:
+        return ((data_high>>27 ) & 0xF); //extract the x axis int but i only want 4bits
+    case 1:
+        return ((data_low>>23 ) & 0xFF); //extract the y axis int but i only want 8bits
+    case 2:
+        return ((data_high>>23 ) & 0xF); //extract the z axis int but i only want 4bits
+    case 3:
+        if (data_low<0){ //handling negative numbers
+            return (0xFF800000 | data_low); //extract the index_x 24bits
+        }
+        return (data_low & 0x007FFFFF); //extract the index_x 24bits
+    case 4:
+        if (data_high<0){ //handling negative numbers
+            return (0xFF800000 | data_high); //extract the index_x 24bits
+        }
+        return (data_high & 0x007FFFFF); //extract the index_z 24bits
+    }
+}
+
+void main()
+{
+    
+    // assign vertex position
+    float x = (getPoint(vertex_data_low,vertex_data_high,0) + getPoint(vertex_data_low,vertex_data_high,3)*CHUNK_SIZE)*BLOCK_SIZE_X;
+    float y = getPoint(vertex_data_low,vertex_data_high,1)*BLOCK_SIZE_Y;
+    float z = (getPoint(vertex_data_low,vertex_data_high,2) + getPoint(vertex_data_low,vertex_data_high,4)*CHUNK_SIZE)*BLOCK_SIZE_Z;
+
+ 
+ gl_Position =  lightVP * vec4(x,y,z, 1.0);
+
+}
